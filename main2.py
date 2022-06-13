@@ -1,11 +1,12 @@
 # from itertools import permutations
 # from math import log2
+from math import inf
 import random
 # from queue import PriorityQueue
 # from dataclasses import dataclass, field
 
-numbers = [25, 100, 4, 6, 5, 3]
-target = 473
+numbers = [23, 52, 104, 13, 4, 9]
+target = 420
 solutions=[]
 
 class NodePriorityQueue:
@@ -15,13 +16,15 @@ class NodePriorityQueue:
         self.queue.sort(key=lambda node:node.getHeuristic())
     def put(self,item):
         self.queue.append(item)
-        self.sort()
     def get(self):
+        self.sort()
         x=self.queue[0]
         self.queue=self.queue[1:]
         return x
     def empty(self):
         return self.queue==[]
+    def getLen(self):
+        return len(self.queue)
 
 
 
@@ -57,12 +60,17 @@ class Node:
 
 
     def discover(self):
+        global closest
         v=self.getVal()
         if v==target and self.sum not in solutions:
             print(self.getString()+f"={target}")
+            closest=self.getHeuristic()
             solutions.append(self.sum)
-        if v!=None:
+        elif v!=None:
             frontier.put(self)
+            if self.getHeuristic()<closest:
+                closest=self.getHeuristic()
+                print(self.getString()+f"={v}")
 
         discovered.add((self.sum, self.remaining))
 
@@ -114,13 +122,14 @@ class Node:
         return self.heuristic
 
 # expanded = set()
+closest = inf
 discovered = set()
 frontier = NodePriorityQueue()
 operations = (("+",lambda x,y:x+y),("*",lambda x,y:x*y),("-",lambda x,y:x-y),("/",lambda x,y:x/y if x/y==int(x/y) else None))
 
 
-# randomly generate start state until valid sum found
-while frontier.empty():
+# randomly generate start states
+while frontier.getLen()<10000:
     random.shuffle(numbers)
     start_ops=[random.choice(operations) for i in numbers[1:]]
     start_seq=(numbers[0],)
