@@ -3,9 +3,9 @@ from math import log2
 # from queue import PriorityQueue
 # from dataclasses import dataclass, field
 
-numbers = (25,75,3,10,8,1)
-target = 669
-
+numbers = (25, 100, 4, 6, 5, 3)
+target = 473
+solutions=[]
 
 class NodePriorityQueue:
     def __init__(self):
@@ -32,33 +32,42 @@ class Node:
         self.heuristic=None
         self.discover()
     def discover(self):
-        if self.value==target:
-            print("".join([str(x) for x in self.path]))
-        if (self.value, self.remaining) not in discovered:
-            discovered.add((self.value, self.remaining))
-            frontier.put(self)
+        if self.value==target and self.path not in solutions:
+            print("".join([str(x) for x in self.path])+f"={target}")
+            solutions.append(self.path)
+        # if (self.value, self.remaining) not in discovered:
+            # discovered.add((self.value, self.remaining))
+        frontier.put(self)
     def expand(self):
         # print("expanding")
-        if (self.value, self.remaining) not in expanded:
-            if self.remaining:
-                for (opname, op) in operations:
-                    newval = op(self.value, self.remaining[0])
+        # if (self.value, self.remaining) not in expanded:
+        if self.remaining:
+            for opname, op in operations:
+                for n,x in enumerate(self.remaining):
+                    newval = op(self.value, x)
                     if newval != None:
-                        node = Node(self.path+(opname,self.remaining[0]),newval,self.remaining[1:])
-            expanded.add((self.value, self.remaining))
+                        Node(self.path+(opname,x),newval,self.remaining[:n]+self.remaining[n+1:])
+            # expanded.add((self.value, self.remaining))
             
     # maybe come up with a better distance heuristic?
     def getHeuristic(self):
-        return abs(self.value-target)#+abs(log2(self.value/target))
+        if self.heuristic:
+            return self.heuristic
+        else:
+        # return abs(self.value-target)
+            alttargets=[op(target, x) for x in self.remaining for (opname, op) in operations]
+            alttargets=[x for x in alttargets if x!=None and x>=0]
+            self.heuristic=min([abs(self.value-alttarget) for alttarget in [target]+alttargets])
+            return self.heuristic
 
-expanded = set()
-discovered = set()
+# expanded = set()
+# discovered = set()
 frontier = NodePriorityQueue()
 operations = (("+",lambda x,y:x+y),("*",lambda x,y:x*y),("-",lambda x,y:x-y),("/",lambda x,y:x/y if x/y==int(x/y) else None))
 
 
-for order in permutations(numbers):
-    Node((order[0],), order[0], order[1:])
+for n,x in enumerate(numbers):
+    Node((x,), x, numbers[:n]+numbers[n+1:])
     
 while not frontier.empty():
     nextnode = frontier.get()
